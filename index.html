@@ -1,90 +1,348 @@
-<h1>🌎 Pasaporte 4R</h1>
-<p>Escanea los códigos QR de cada grado para desbloquear tu sorpresa.</p>
-
-<!-- Contenedor de la cámara -->
-<div id="reader"></div>
-<div id="feedback"></div>
-
-<!-- Indicadores de progreso -->
-<div class="status-container" id="badges-container">
-    <!-- Generados por JS -->
-</div>
-
-<!-- Mensaje Oculto Final -->
-<div id="mensaje-final">
-    🎉 ¡Felicidades! Completaste las 7 estaciones. 🎉<br><br>
-    <a href="https://tu-enlace-al-souvenir.com" target="_blank" style="color: #333; text-decoration: none; background: white; padding: 10px 20px; border-radius: 5px; display: inline-block; margin-top: 10px;">
-        📥 Descargar Souvenir Digital
-    </a>
-</div>
-
-<script>
-    // 1. Definir los códigos válidos que repartirán los grados
-    // Estos son los textos que deben estar dentro de los QR impresos en las estaciones
-    const codigosValidos = ["GRADO_1", "GRADO_2", "GRADO_3", "GRADO_4", "GRADO_5", "GRADO_6", "GRADO_7"];
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pasaporte 4R - Muestra Educativa</title>
     
-    // Estado actual de códigos escaneados
-    let codigosEscaneados = new Set();
+    <!-- Fuentes y Librerías -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    // 2. Crear visualmente las insignias (badges)
-    const badgesContainer = document.getElementById('badges-container');
-    codigosValidos.forEach((codigo, index) => {
-        let badge = document.createElement('div');
-        badge.className = 'badge';
-        badge.id = `badge-${codigo}`;
-        badge.innerText = `${index + 1}°`;
-        badgesContainer.appendChild(badge);
-    });
+    <style>
+        :root {
+            --primary-green: #00a046;
+            --secondary-green: #e8f5e9;
+            --accent-orange: #f97316;
+            --light-bg: #f8fafc;
+            --grey-inactive: #cbd5e1;
+            --text-dark: #1e293b;
+        }
 
-    // 3. Lógica al escanear un QR con éxito
-    function onScanSuccess(decodedText, decodedResult) {
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #e2e8f0;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--light-bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Encabezado Estilizado */
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        h1 { 
+            color: var(--primary-green); 
+            font-size: 28px; 
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .progress-text {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        /* Contenedor del Escáner mejorado */
+        .scanner-section {
+            background: white;
+            border-radius: 30px;
+            padding: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+            border: 2px solid var(--secondary-green);
+        }
+        #reader {
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            border: none !important;
+        }
+        
+        #feedback { 
+            text-align: center;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 15px;
+            padding: 8px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        /* Tablero de Progreso */
+        .badges-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 20px;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .badge-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .badge-circle {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 3px solid var(--grey-inactive);
+            color: var(--grey-inactive);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 700;
+            background-color: white;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .badge-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--grey-inactive);
+        }
+
+        /* Estado Activo con Animación */
+        .badge-wrapper.active .badge-circle {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 5px 12px rgba(0, 160, 70, 0.3);
+        }
+        .badge-wrapper.active .badge-label {
+            color: var(--primary-green);
+        }
+
+        /* Pantalla de Éxito */
+        #pantalla-exito {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+            animation: fadeIn 0.8s ease-out;
+        }
+        .success-icon { font-size: 60px; margin-bottom: 10px; }
+
+        .btn-descarga {
+            display: block;
+            background-color: var(--primary-green);
+            color: white;
+            text-decoration: none;
+            padding: 18px;
+            border-radius: 50px;
+            font-weight: 700;
+            margin-top: 25px;
+            box-shadow: 0 8px 20px rgba(0, 160, 70, 0.3);
+        }
+
+        .btn-reset {
+            margin-top: 40px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            text-decoration: underline;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ocultar basurilla visual de la librería */
+        #reader__dashboard_section_csr span, 
+        #reader__dashboard_section_fsit button { display: none !important; }
+        #reader img { width: 40px !important; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header id="app-header">
+            <h1>🌎 Pasaporte 4R</h1>
+            <div class="progress-text" id="progreso-texto">0 de 7 estaciones completadas</div>
+        </header>
+
+        <div class="scanner-section" id="scanner-section">
+            <div id="reader"></div>
+            <div id="feedback">Escaneá el código de un grado</div>
+        </div>
+
+        <div class="badges-container" id="badges-container">
+            <!-- Generados por JS -->
+        </div>
+
+        <div id="pantalla-exito">
+            <div class="success-icon">🏆</div>
+            <h2>¡Completaste el Desafío!</h2>
+            <p>Gracias por recorrer la muestra y aprender sobre las 4R.</p>
+            <a href="https://tu-enlace-al-souvenir.com" target="_blank" class="btn-descarga">
+                📥 Descargar Souvenir Digital
+            </a>
+            <button class="btn-reset" onclick="reiniciarTodo()">Reiniciar mi pasaporte</button>
+        </div>
+
+        <footer style="text-align: center;">
+            <button class="btn-reset" id="reset-link" onclick="reiniciarTodo()">Reiniciar progreso</button>
+        </footer>
+    </div>
+
+    <script>
+        const codigosValidos = ["1", "2", "3", "4", "5", "6", "7"];
+        
+        // --- 1. Persistencia: Cargar datos guardados ---
+        let codigosEscaneados = new Set(JSON.parse(localStorage.getItem('pasaporte4R_progreso')) || []);
+
+        const badgesContainer = document.getElementById('badges-container');
         const feedback = document.getElementById('feedback');
 
-        // Verificar si el texto escaneado está en nuestra lista de válidos
-        if (codigosValidos.includes(decodedText)) {
-            if (!codigosEscaneados.has(decodedText)) {
-                // Registrar el nuevo código
-                codigosEscaneados.add(decodedText);
-                document.getElementById(`badge-${decodedText}`).classList.add('active');
-                feedback.innerText = `¡Código de ${decodedText} registrado!`;
-                feedback.style.color = "green";
+        // --- 2. Generar Interfaz de Badges ---
+        codigosValidos.forEach((codigo) => {
+            let wrapper = document.createElement('div');
+            wrapper.className = `badge-wrapper ${codigosEscaneados.has(codigo) ? 'active' : ''}`;
+            wrapper.id = `wrapper-${codigo}`;
 
-                // Comprobar si ya están todos
-                verificarVictoria();
+            wrapper.innerHTML = `
+                <div class="badge-circle">${codigo}°</div>
+                <div class="badge-label">${codigosEscaneados.has(codigo) ? 'LOGRADO' : 'PENDIENTE'}</div>
+            `;
+            badgesContainer.appendChild(wrapper);
+        });
+
+        actualizarProgreso();
+
+        // --- 3. Funciones de Sonido y Vibración ---
+        function feedbackSensorial() {
+            // Vibración (solo funciona en Android con Chrome)
+            if (navigator.vibrate) navigator.vibrate(200);
+            
+            // Sonido sintetizado
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = context.createOscillator();
+            const gain = context.createGain();
+            osc.connect(gain);
+            gain.connect(context.destination);
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(880, context.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, context.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, context.currentTime);
+            gain.gain.linearRampToValueAtTime(0, context.currentTime + 0.1);
+            osc.start();
+            osc.stop(context.currentTime + 0.1);
+        }
+
+        // --- 4. Lógica de Escaneo ---
+        function onScanSuccess(decodedText) {
+            // Limpiar espacios por si acaso
+            const codigo = decodedText.trim();
+
+            if (codigosValidos.includes(codigo)) {
+                if (!codigosEscaneados.has(codigo)) {
+                    // Nuevo sello
+                    codigosEscaneados.add(codigo);
+                    localStorage.setItem('pasaporte4R_progreso', JSON.stringify(Array.from(codigosEscaneados)));
+                    
+                    feedbackSensorial();
+                    actualizarInterfazGrado(codigo);
+                    
+                    feedback.innerText = `✅ ¡Grado ${codigo} completado!`;
+                    feedback.style.backgroundColor = "var(--secondary-green)";
+                    feedback.style.color = "var(--primary-green)";
+
+                    verificarVictoria();
+                } else {
+                    feedback.innerText = "Este grado ya está sellado 🆗";
+                    feedback.style.color = var(--accent-orange);
+                }
             } else {
-                feedback.innerText = "Ya habías escaneado este código.";
-                feedback.style.color = "orange";
+                feedback.innerText = "Código no válido ❌";
+                feedback.style.color = "red";
             }
-        } else {
-            feedback.innerText = "Código no válido para esta muestra.";
-            feedback.style.color = "red";
         }
-    }
 
-    // 4. Lógica para verificar si completó todos
-    function verificarVictoria() {
+        function actualizarInterfazGrado(codigo) {
+            const wrapper = document.getElementById(`wrapper-${codigo}`);
+            wrapper.classList.add('active');
+            wrapper.querySelector('.badge-label').innerText = 'LOGRADO';
+            actualizarProgreso();
+        }
+
+        function actualizarProgreso() {
+            document.getElementById('progreso-texto').innerText = 
+                `${codigosEscaneados.size} de 7 estaciones completadas`;
+        }
+
+        function verificarVictoria() {
+            if (codigosEscaneados.size === codigosValidos.length) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#00a046', '#ffd700', '#ffffff']
+                });
+
+                setTimeout(() => {
+                    html5QrcodeScanner.clear();
+                    document.getElementById('app-header').style.display = 'none';
+                    document.getElementById('scanner-section').style.display = 'none';
+                    document.getElementById('badges-container').style.display = 'none';
+                    document.getElementById('reset-link').style.display = 'none';
+                    document.getElementById('pantalla-exito').style.display = 'block';
+                }, 1500);
+            }
+        }
+
+        function reiniciarTodo() {
+            if(confirm("¿Seguro que quieres borrar tus sellos y empezar de nuevo?")) {
+                localStorage.removeItem('pasaporte4R_progreso');
+                location.reload();
+            }
+        }
+
+        // --- 5. Inicialización ---
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { 
+                fps: 10, 
+                qrbox: {width: 250, height: 250},
+                aspectRatio: 1.0,
+                rememberLastUsedCamera: true
+            }
+        );
+
+        // Si ya está completo al cargar, mostrar pantalla final
         if (codigosEscaneados.size === codigosValidos.length) {
-            // Ocultar la cámara para que no siga escaneando
-            document.getElementById('reader').style.display = 'none';
-            document.getElementById('feedback').style.display = 'none';
-            
-            // Mostrar el mensaje final
-            document.getElementById('mensaje-final').style.display = 'block';
-            
-            // Detener el escáner
-            html5QrcodeScanner.clear();
+            verificarVictoria();
+        } else {
+            html5QrcodeScanner.render(onScanSuccess);
         }
-    }
-
-    function onScanFailure(error) {
-        // Se ignora para no saturar la consola, la cámara lee constantemente buscando QR
-    }
-
-    // 5. Inicializar el lector de QR
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: {width: 250, height: 250} },
-        /* verbose= */ false
-    );
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-</script>
+    </script>
+</body>
+</html>
