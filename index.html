@@ -1,0 +1,90 @@
+<h1>🌎 Pasaporte 4R</h1>
+<p>Escanea los códigos QR de cada grado para desbloquear tu sorpresa.</p>
+
+<!-- Contenedor de la cámara -->
+<div id="reader"></div>
+<div id="feedback"></div>
+
+<!-- Indicadores de progreso -->
+<div class="status-container" id="badges-container">
+    <!-- Generados por JS -->
+</div>
+
+<!-- Mensaje Oculto Final -->
+<div id="mensaje-final">
+    🎉 ¡Felicidades! Completaste las 7 estaciones. 🎉<br><br>
+    <a href="https://tu-enlace-al-souvenir.com" target="_blank" style="color: #333; text-decoration: none; background: white; padding: 10px 20px; border-radius: 5px; display: inline-block; margin-top: 10px;">
+        📥 Descargar Souvenir Digital
+    </a>
+</div>
+
+<script>
+    // 1. Definir los códigos válidos que repartirán los grados
+    // Estos son los textos que deben estar dentro de los QR impresos en las estaciones
+    const codigosValidos = ["GRADO_1", "GRADO_2", "GRADO_3", "GRADO_4", "GRADO_5", "GRADO_6", "GRADO_7"];
+    
+    // Estado actual de códigos escaneados
+    let codigosEscaneados = new Set();
+
+    // 2. Crear visualmente las insignias (badges)
+    const badgesContainer = document.getElementById('badges-container');
+    codigosValidos.forEach((codigo, index) => {
+        let badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.id = `badge-${codigo}`;
+        badge.innerText = `${index + 1}°`;
+        badgesContainer.appendChild(badge);
+    });
+
+    // 3. Lógica al escanear un QR con éxito
+    function onScanSuccess(decodedText, decodedResult) {
+        const feedback = document.getElementById('feedback');
+
+        // Verificar si el texto escaneado está en nuestra lista de válidos
+        if (codigosValidos.includes(decodedText)) {
+            if (!codigosEscaneados.has(decodedText)) {
+                // Registrar el nuevo código
+                codigosEscaneados.add(decodedText);
+                document.getElementById(`badge-${decodedText}`).classList.add('active');
+                feedback.innerText = `¡Código de ${decodedText} registrado!`;
+                feedback.style.color = "green";
+
+                // Comprobar si ya están todos
+                verificarVictoria();
+            } else {
+                feedback.innerText = "Ya habías escaneado este código.";
+                feedback.style.color = "orange";
+            }
+        } else {
+            feedback.innerText = "Código no válido para esta muestra.";
+            feedback.style.color = "red";
+        }
+    }
+
+    // 4. Lógica para verificar si completó todos
+    function verificarVictoria() {
+        if (codigosEscaneados.size === codigosValidos.length) {
+            // Ocultar la cámara para que no siga escaneando
+            document.getElementById('reader').style.display = 'none';
+            document.getElementById('feedback').style.display = 'none';
+            
+            // Mostrar el mensaje final
+            document.getElementById('mensaje-final').style.display = 'block';
+            
+            // Detener el escáner
+            html5QrcodeScanner.clear();
+        }
+    }
+
+    function onScanFailure(error) {
+        // Se ignora para no saturar la consola, la cámara lee constantemente buscando QR
+    }
+
+    // 5. Inicializar el lector de QR
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: {width: 250, height: 250} },
+        /* verbose= */ false
+    );
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+</script>
