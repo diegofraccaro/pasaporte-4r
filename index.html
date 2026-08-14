@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Pasaporte 4R</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Librería pura para leer QR -->
+    
+    <!-- Librería para leer QR -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- Librería para el efecto de papel picado (Confetti) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
         :root {
             --primary-green: #00a046;
@@ -42,7 +46,7 @@
         h1 { color: var(--primary-green); font-size: 34px; margin: 0 0 10px 0; }
         p { font-size: 17px; color: #555; margin: 0; line-height: 1.5; font-weight: 600;}
 
-        /* Controles de la cámara personalizados */
+        /* Controles de la cámara */
         .scanner-section {
             background: white;
             border-radius: 30px;
@@ -72,7 +76,6 @@
             width: 100% !important;
         }
 
-        /* Nuestro propio botón para encender la cámara */
         .btn-iniciar-camara {
             background-color: var(--primary-green);
             color: white;
@@ -93,7 +96,7 @@
             margin-top: 15px; min-height: 27px; color: var(--primary-green); 
         }
 
-        /* Tablero de Progreso (Ahora adaptado para 4 opciones) */
+        /* Tablero de Progreso */
         .badges-container {
             display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; 
             padding: 20px 10px; background: white; border-radius: 30px; 
@@ -105,20 +108,42 @@
         .badge-label { font-size: 11px; font-weight: 700; color: var(--grey-inactive); text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-check { position: absolute; top: -4px; right: 0px; background-color: white; color: var(--primary-green); width: 28px; height: 28px; border-radius: 50%; display: none; justify-content: center; align-items: center; font-size: 16px; font-weight: bold; box-shadow: 0 3px 8px rgba(0,0,0,0.25); }
 
-        .badge-wrapper.active .badge-circle { background-color: var(--primary-green); border-color: var(--primary-green); color: white; }
+        .badge-wrapper.active .badge-circle { background-color: var(--primary-green); border-color: var(--primary-green); color: white; transform: scale(1.1); }
         .badge-wrapper.active .badge-label { color: var(--primary-green); }
         .badge-wrapper.active .badge-check { display: flex; }
 
         /* Pantalla de Éxito Final */
         #pantalla-exito { 
-            display: none; text-align: center; padding: 50px 20px; 
+            display: none; text-align: center; padding: 40px 20px; 
             animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            flex-grow: 1; justify-content: center; flex-direction: column;
+            flex-grow: 1; justify-content: center; flex-direction: column; align-items: center;
         }
-        #pantalla-exito h2 { color: var(--primary-green); font-size: 36px; margin-bottom: 15px; }
-        #pantalla-exito p { font-size: 20px; margin-bottom: 30px; }
-        .btn-descarga { display: inline-block; background-color: var(--primary-green); color: white; text-decoration: none; padding: 20px 40px; border-radius: 40px; font-weight: 700; font-size: 20px; box-shadow: 0 8px 25px rgba(0, 160, 70, 0.4); transition: transform 0.2s; }
+        #pantalla-exito h2 { color: var(--primary-green); font-size: 36px; margin-bottom: 10px; }
+        #pantalla-exito p { font-size: 18px; margin-bottom: 25px; }
+        
+        /* Botón de Souvenir transformado */
+        .btn-descarga { 
+            display: inline-block; background-color: var(--primary-green); color: white; 
+            border: none; padding: 20px 40px; border-radius: 40px; 
+            font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; 
+            box-shadow: 0 8px 25px rgba(0, 160, 70, 0.4); cursor: pointer; transition: transform 0.2s; 
+        }
         .btn-descarga:active { transform: scale(0.95); }
+        
+        /* Mensaje Final que aparece al hacer clic */
+        #mensaje-despedida {
+            display: none;
+            background-color: #ffd700;
+            color: #333;
+            padding: 25px;
+            border-radius: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.4;
+            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
+            animation: popIn 0.5s ease-out;
+        }
+
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
@@ -133,29 +158,38 @@
 
         <div class="scanner-section" id="scanner-section">
             <div id="reader">
-                <!-- Botón propio que forza el encendido -->
                 <button id="btn-iniciar" class="btn-iniciar-camara" onclick="iniciarCamara()">📷 Activar Cámara</button>
             </div>
             <div id="feedback">Presioná el botón para comenzar</div>
         </div>
 
         <div class="badges-container" id="badges-container">
-            <!-- Los círculos se generan por JavaScript -->
+            <!-- Círculos generados por JS -->
         </div>
 
         <div id="pantalla-exito">
             <h2>¡Misión Cumplida! 🎉</h2>
             <p>Completaste las 4 estaciones de nuestro proyecto.</p>
-            <!-- REEMPLAZAR AQUÍ TU ENLACE DE DESCARGA -->
-            <a href="https://tu-enlace-al-souvenir.com" target="_blank" class="btn-descarga">
-                📥 Obtener Souvenir
-            </a>
+            
+            <button id="btn-souvenir" class="btn-descarga" onclick="revelarMensajeFinal()">
+                🎁 Obtener Souvenir
+            </button>
+
+            <!-- Mensaje oculto que se revela al tocar el botón -->
+            <div id="mensaje-despedida">
+                ¡Gracias por participar!<br><br>
+                Podés pasar a buscar tu Souvenir mostrando esta pantalla por la salida.
+            </div>
         </div>
 
     </div>
 
     <script>
-        // REDUCIDO A SOLO 4 ESTACIONES
+        // CONFIGURACIÓN DE EFECTOS DE SONIDO (Audios gratuitos de Google)
+        const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+        const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
+
+        // LAS 4 ESTACIONES
         const estaciones = [
             { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
             { id: "estacion2", titulo: "2°", codigoFisico: "REUTILIZAR" },
@@ -165,9 +199,9 @@
 
         let codigosEscaneados = new Set();
         const badgesContainer = document.getElementById('badges-container');
-        let html5QrCode; // Variable global para la cámara
+        let html5QrCode; 
         
-        // 1. Generar la interfaz para las 4 opciones
+        // 1. Generar la interfaz
         estaciones.forEach((estacion) => {
             let wrapper = document.createElement('div');
             wrapper.className = 'badge-wrapper';
@@ -192,33 +226,33 @@
             badgesContainer.appendChild(wrapper);
         });
 
-        // 2. Nueva función para forzar el encendido de la cámara trasera
+        // 2. Encender cámara
         function iniciarCamara() {
             const btn = document.getElementById('btn-iniciar');
             const feedback = document.getElementById('feedback');
             
-            btn.style.display = 'none'; // Ocultamos nuestro botón
+            // Truco para habilitar el sonido en iOS/Android: el usuario debe hacer clic primero
+            sonidoEscaneo.play().then(() => { sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; }).catch(e=>{});
+            sonidoVictoria.play().then(() => { sonidoVictoria.pause(); sonidoVictoria.currentTime = 0; }).catch(e=>{});
+
+            btn.style.display = 'none'; 
             feedback.innerText = "Cargando cámara...";
 
-            // Usamos la clase directa, sin la interfaz por defecto de la librería
             html5QrCode = new Html5Qrcode("reader");
-
             html5QrCode.start(
-                { facingMode: "environment" }, // Forza la cámara trasera
+                { facingMode: "environment" }, 
                 { fps: 10, qrbox: { width: 250, height: 250 } },
                 onScanSuccess,
-                (errorMessage) => { /* Ignoramos errores de escaneo en curso */ }
+                (errorMessage) => { }
             ).then(() => {
                 feedback.innerText = "Apuntá al código QR...";
             }).catch((err) => {
-                // Si falla (por permisos o error del navegador)
                 btn.style.display = 'block';
                 feedback.innerText = "Error: Verifica los permisos de la cámara.";
-                console.log(err);
             });
         }
 
-        // 3. Lógica al leer un QR
+        // 3. Al escanear un QR
         function onScanSuccess(decodedText) {
             const feedback = document.getElementById('feedback');
             const estacionEncontrada = estaciones.find(est => est.codigoFisico === decodedText);
@@ -233,6 +267,13 @@
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
+                    // === EFECTOS DE ESCANEO ===
+                    // 1. Sonido Gracioso ("Boing")
+                    sonidoEscaneo.currentTime = 0;
+                    sonidoEscaneo.play().catch(e => console.log("Audio no permitido", e));
+                    // 2. Vibración del celular (dos pulsos rápidos)
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+
                     verificarVictoria();
                 } else {
                     feedback.innerText = `¡Ya visitaste la estación ${estacionEncontrada.titulo}!`;
@@ -243,7 +284,6 @@
                 feedback.style.color = "#dc2626";
             }
             
-            // Regresar texto a la normalidad
             setTimeout(() => {
                 if(codigosEscaneados.size < estaciones.length) {
                     feedback.innerText = "Apuntá al siguiente QR...";
@@ -252,9 +292,9 @@
             }, 3000);
         }
 
+        // 4. Verificar si completó las 4
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
-                // Apagar la cámara correctamente
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-section').style.display = 'none';
                     document.getElementById('app-header').style.display = 'none';
@@ -262,8 +302,46 @@
                     
                     let pantallaExito = document.getElementById('pantalla-exito');
                     pantallaExito.style.display = 'flex';
+
+                    // === EFECTOS DE VICTORIA ===
+                    // 1. Sonido de Aplausos
+                    sonidoVictoria.currentTime = 0;
+                    sonidoVictoria.play().catch(e => console.log("Audio no permitido", e));
+                    
+                    // 2. Vibración larga de festejo
+                    if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
+                    
+                    // 3. Lluvia de Papel Picado (Fuegos Artificiales)
+                    lanzarConfetti();
+
                 }).catch(err => console.log("Error apagando cámara", err));
             }
+        }
+
+        // 5. Función para animar el papel picado
+        function lanzarConfetti() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                // Lanza confetti desde el lado izquierdo
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#00a046', '#ffd700', '#ff0000'] });
+                // Lanza confetti desde el lado derecho
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#00a046', '#ffd700', '#ff0000'] });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        // 6. Acción del Botón Final
+        function revelarMensajeFinal() {
+            document.getElementById('btn-souvenir').style.display = 'none';
+            document.getElementById('mensaje-despedida').style.display = 'block';
+            
+            // Extra vibración cortita al tocar el botón
+            if (navigator.vibrate) navigator.vibrate(100);
         }
     </script>
 </body>
