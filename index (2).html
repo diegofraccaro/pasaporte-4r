@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Etiquetas clave para forzar la pantalla completa y evitar zoom accidental -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <title>Pasaporte 4R</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            --primary-green: #00a046;
+            --light-bg: #f4f9f4;
+            --grey-inactive: #b0b0b0;
+            --text-dark: #333333;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            /* Evita el scroll horizontal */
+            overflow-x: hidden; 
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            /* 100dvh asegura que ocupe exactamente la pantalla visible del celular sin importar la barra de navegación */
+            min-height: 100dvh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25px 20px;
+            box-sizing: border-box;
+        }
+
+        /* Encabezado Maximizado */
+        header { 
+            text-align: center; 
+            margin-bottom: 15px; 
+        }
+        h1 { 
+            color: var(--primary-green); 
+            font-size: 34px; /* Más grande */
+            margin: 0 0 10px 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+        }
+        p { 
+            font-size: 17px; /* Más legible */
+            color: #555; 
+            margin: 0; 
+            line-height: 1.5; 
+            font-weight: 600;
+        }
+
+        /* Escáner Maximizado */
+        .scanner-section {
+            background: white;
+            border-radius: 30px;
+            padding: 15px;
+            box-shadow: 0 8px 30px rgba(0, 160, 70, 0.15);
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #reader { 
+            width: 100%; 
+            border-radius: 25px; 
+            overflow: hidden; 
+            border: none !important; 
+        }
+        #reader video { 
+            object-fit: cover; 
+            border-radius: 25px; 
+        }
+        
+        #feedback { 
+            text-align: center; 
+            font-weight: 700; 
+            font-size: 18px; /* Texto de respuesta más grande */
+            margin-top: 20px; 
+            min-height: 27px; 
+            color: var(--primary-green); 
+        }
+
+        /* Tablero de Progreso Maximizado */
+        .badges-container {
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 20px; /* Más separación */
+            padding: 20px 10px; 
+            background: white; 
+            border-radius: 30px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 10px;
+        }
+
+        .badge-wrapper { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            position: relative; 
+            width: 85px; /* Contenedor más ancho */
+            gap: 8px; 
+        }
+        
+        .badge-circle {
+            width: 75px; /* Círculo mucho más grande */
+            height: 75px; 
+            border-radius: 50%; 
+            border: 4px solid var(--grey-inactive); /* Borde más grueso */
+            color: var(--grey-inactive); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 30px; /* Número más grande */
+            font-weight: 700; 
+            background-color: white; 
+            transition: all 0.4s ease;
+        }
+        
+        .badge-label { 
+            font-size: 11px; /* Etiqueta más grande */
+            font-weight: 700; 
+            color: var(--grey-inactive); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+        
+        .badge-check {
+            position: absolute; 
+            top: -4px; 
+            right: 0px; 
+            background-color: white; 
+            color: var(--primary-green); 
+            width: 28px; /* Tilde más grande */
+            height: 28px; 
+            border-radius: 50%; 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            font-size: 16px; 
+            font-weight: bold; 
+            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+        }
+
+        .badge-wrapper.active .badge-circle { 
+            background-color: var(--primary-green); 
+            border-color: var(--primary-green); 
+            color: white; 
+        }
+        .badge-wrapper.active .badge-label { 
+            color: var(--primary-green); 
+        }
+        .badge-wrapper.active .badge-check { 
+            display: flex; 
+        }
+
+        /* Pantalla de Éxito Final */
+        #pantalla-exito { 
+            display: none; 
+            text-align: center; 
+            padding: 50px 20px; 
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            flex-grow: 1;
+            justify-content: center;
+            flex-direction: column;
+        }
+        #pantalla-exito h2 { 
+            color: var(--primary-green); 
+            font-size: 36px; /* Título final enorme */
+            margin-bottom: 15px; 
+        }
+        #pantalla-exito p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        .btn-descarga { 
+            display: inline-block; 
+            background-color: var(--primary-green); 
+            color: white; 
+            text-decoration: none; 
+            padding: 20px 40px; /* Botón gigante */
+            border-radius: 40px; 
+            font-weight: 700; 
+            font-size: 20px; 
+            box-shadow: 0 8px 25px rgba(0, 160, 70, 0.4); 
+            transition: transform 0.2s; 
+        }
+        .btn-descarga:active { 
+            transform: scale(0.95); 
+        }
+        @keyframes popIn { 
+            0% { opacity: 0; transform: scale(0.8); } 
+            100% { opacity: 1; transform: scale(1); } 
+        }
+        #reader__dashboard_section_csr span { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header id="app-header">
+            <h1>🌎 Pasaporte 4R 🌿</h1>
+            <p>Escaneá los códigos de cada grado para tu sorpresa.</p>
+        </header>
+
+        <div class="scanner-section" id="scanner-section">
+            <div id="reader"></div>
+            <div id="feedback">Apuntá al código QR...</div>
+        </div>
+
+        <div class="badges-container" id="badges-container">
+            <!-- Los círculos se generan por JavaScript -->
+        </div>
+
+        <div id="pantalla-exito">
+            <h2>¡Misión Cumplida! 🎉</h2>
+            <p>Recorriste las 7 estaciones y demostraste tu compromiso con el planeta.</p>
+            <!-- REEMPLAZAR AQUÍ TU ENLACE DE DESCARGA -->
+            <a href="https://tu-enlace-al-souvenir.com" target="_blank" class="btn-descarga">
+                📥 Obtener Souvenir
+            </a>
+        </div>
+
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE LAS ESTACIONES (Textos que deben estar en los QR)
+        const estaciones = [
+            { id: "grado1", titulo: "1°", codigoFisico: "REDUCIR" },
+            { id: "grado2", titulo: "2°", codigoFisico: "REUTILIZAR" },
+            { id: "grado3", titulo: "3°", codigoFisico: "RECICLAR" },
+            { id: "grado4", titulo: "4°", codigoFisico: "RECUPERAR" },
+            { id: "grado5", titulo: "5°", codigoFisico: "🌿" },       
+            { id: "grado6", titulo: "6°", codigoFisico: "COMPOST" },
+            { id: "grado7", titulo: "7°", codigoFisico: "TIERRA" }
+        ];
+
+        let codigosEscaneados = new Set();
+        const badgesContainer = document.getElementById('badges-container');
+        
+        // 1. Generar la interfaz
+        estaciones.forEach((estacion) => {
+            let wrapper = document.createElement('div');
+            wrapper.className = 'badge-wrapper';
+            wrapper.id = `wrapper-${estacion.id}`;
+
+            let circle = document.createElement('div');
+            circle.className = 'badge-circle';
+            circle.innerText = estacion.titulo; 
+
+            let check = document.createElement('div');
+            check.className = 'badge-check';
+            check.innerText = '✓';
+
+            let label = document.createElement('div');
+            label.className = 'badge-label';
+            label.id = `label-${estacion.id}`;
+            label.innerText = 'INCOMPLETO';
+
+            circle.appendChild(check);
+            wrapper.appendChild(circle);
+            wrapper.appendChild(label);
+            badgesContainer.appendChild(wrapper);
+        });
+
+        // 2. Lógica de Escaneo
+        function onScanSuccess(decodedText, decodedResult) {
+            const feedback = document.getElementById('feedback');
+            const estacionEncontrada = estaciones.find(est => est.codigoFisico === decodedText);
+
+            if (estacionEncontrada) {
+                if (!codigosEscaneados.has(estacionEncontrada.id)) {
+                    codigosEscaneados.add(estacionEncontrada.id);
+                    
+                    document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
+                    document.getElementById(`label-${estacionEncontrada.id}`).innerText = 'COMPLETO';
+                    
+                    feedback.innerText = `¡${estacionEncontrada.titulo} Grado registrado!`;
+                    feedback.style.color = "var(--primary-green)";
+
+                    verificarVictoria();
+                } else {
+                    feedback.innerText = `¡Ya visitaste ${estacionEncontrada.titulo}!`;
+                    feedback.style.color = "#d97706";
+                }
+            } else {
+                feedback.innerText = "Código incorrecto para esta muestra.";
+                feedback.style.color = "#dc2626";
+            }
+            
+            setTimeout(() => {
+                if(codigosEscaneados.size < estaciones.length) {
+                    feedback.innerText = "Buscando el siguiente QR...";
+                    feedback.style.color = "var(--text-dark)";
+                }
+            }, 3000);
+        }
+
+        function verificarVictoria() {
+            if (codigosEscaneados.size === estaciones.length) {
+                html5QrcodeScanner.clear();
+                document.getElementById('scanner-section').style.display = 'none';
+                document.getElementById('app-header').style.display = 'none';
+                document.getElementById('badges-container').style.display = 'none';
+                
+                let pantallaExito = document.getElementById('pantalla-exito');
+                pantallaExito.style.display = 'flex';
+            }
+        }
+
+        function onScanFailure(error) { }
+
+        // Iniciar la cámara (aspectRatio ajustado para hacer el recuadro de escaneo más amigable)
+        let html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", { fps: 10, qrbox: {width: 280, height: 280}, aspectRatio: 1.0 }, false
+        );
+        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    </script>
+</body>
+</html>
