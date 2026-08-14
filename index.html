@@ -6,9 +6,7 @@
     <title>Pasaporte 4R</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Librería para leer QR -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <!-- Librería para el efecto de papel picado (Confetti) -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <style>
@@ -46,7 +44,6 @@
         h1 { color: var(--primary-green); font-size: 34px; margin: 0 0 10px 0; }
         p { font-size: 17px; color: #555; margin: 0; line-height: 1.5; font-weight: 600;}
 
-        /* Controles de la cámara */
         .scanner-section {
             background: white;
             border-radius: 30px;
@@ -96,7 +93,6 @@
             margin-top: 15px; min-height: 27px; color: var(--primary-green); 
         }
 
-        /* Tablero de Progreso */
         .badges-container {
             display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; 
             padding: 20px 10px; background: white; border-radius: 30px; 
@@ -112,7 +108,6 @@
         .badge-wrapper.active .badge-label { color: var(--primary-green); }
         .badge-wrapper.active .badge-check { display: flex; }
 
-        /* Pantalla de Éxito Final */
         #pantalla-exito { 
             display: none; text-align: center; padding: 40px 20px; 
             animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -121,7 +116,6 @@
         #pantalla-exito h2 { color: var(--primary-green); font-size: 36px; margin-bottom: 10px; }
         #pantalla-exito p { font-size: 18px; margin-bottom: 25px; }
         
-        /* Botón de Souvenir transformado */
         .btn-descarga { 
             display: inline-block; background-color: var(--primary-green); color: white; 
             border: none; padding: 20px 40px; border-radius: 40px; 
@@ -130,18 +124,31 @@
         }
         .btn-descarga:active { transform: scale(0.95); }
         
-        /* Mensaje Final que aparece al hacer clic */
+        /* === NUEVO MENSAJE DESPEDIDA PANTALLA COMPLETA === */
         #mensaje-despedida {
-            display: none;
-            background-color: #ffd700;
+            display: none; /* Se activará como 'flex' desde JS */
+            position: fixed; /* Lo despega del flujo normal */
+            top: 0; left: 0; width: 100vw; height: 100dvh; /* Cubre toda la pantalla */
+            z-index: 9999; /* Se asegura de estar por encima de TODO */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px;
+            box-sizing: border-box;
             color: #333;
-            padding: 25px;
-            border-radius: 20px;
-            font-size: 20px;
+            font-size: 32px; /* 50% más grande */
             font-weight: 700;
             line-height: 1.4;
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
-            animation: popIn 0.5s ease-out;
+            /* La animación llamará a los 3 colores infinitamente */
+            animation: popIn 0.5s ease-out, alternarFondo 4s infinite alternate;
+        }
+
+        /* Animación para los 3 colores alternados */
+        @keyframes alternarFondo {
+            0% { background-color: #FFD700; }   /* Dorado */
+            50% { background-color: #A7FFEB; }  /* Verde menta vibrante */
+            100% { background-color: #FFCDD2; } /* Rosado suave */
         }
 
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
@@ -150,7 +157,6 @@
 <body>
 
     <div class="app-container">
-        
         <header id="app-header">
             <h1>🌎 Muestra 4R 🌿</h1>
             <p>Escaneá los 4 códigos para descubrir tu sorpresa.</p>
@@ -170,26 +176,21 @@
         <div id="pantalla-exito">
             <h2>¡Misión Cumplida! 🎉</h2>
             <p>Completaste las 4 estaciones de nuestro proyecto.</p>
-            
-            <button id="btn-souvenir" class="btn-descarga" onclick="revelarMensajeFinal()">
-                🎁 Obtener Souvenir
-            </button>
-
-            <!-- Mensaje oculto que se revela al tocar el botón -->
-            <div id="mensaje-despedida">
-                ¡Gracias por participar!<br><br>
-                Podés pasar a buscar tu Souvenir mostrando esta pantalla por la salida.
-            </div>
+            <button id="btn-souvenir" class="btn-descarga" onclick="revelarMensajeFinal()">🎁 Obtener Souvenir</button>
         </div>
 
+        <!-- El mensaje ahora está fuera del contenedor para cubrir todo -->
+        <div id="mensaje-despedida">
+            <span>¡Gracias por participar! 🙌</span><br><br>
+            <span style="font-size: 26px; font-weight: 600;">Podés pasar a buscar tu Souvenir mostrando esta pantalla por la salida.</span>
+        </div>
     </div>
 
     <script>
-        // CONFIGURACIÓN DE EFECTOS DE SONIDO (Audios gratuitos de Google)
-        const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
-        const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
+        const sonidoEscaneo = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+        const sonidoVictoria = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
 
-        // LAS 4 ESTACIONES
+        // RECUERDA: Aquí defines tus 4 palabras ocultas (o emojis)
         const estaciones = [
             { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
             { id: "estacion2", titulo: "2°", codigoFisico: "REUTILIZAR" },
@@ -201,7 +202,6 @@
         const badgesContainer = document.getElementById('badges-container');
         let html5QrCode; 
         
-        // 1. Generar la interfaz
         estaciones.forEach((estacion) => {
             let wrapper = document.createElement('div');
             wrapper.className = 'badge-wrapper';
@@ -226,12 +226,10 @@
             badgesContainer.appendChild(wrapper);
         });
 
-        // 2. Encender cámara
         function iniciarCamara() {
             const btn = document.getElementById('btn-iniciar');
             const feedback = document.getElementById('feedback');
             
-            // Truco para habilitar el sonido en iOS/Android: el usuario debe hacer clic primero
             sonidoEscaneo.play().then(() => { sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; }).catch(e=>{});
             sonidoVictoria.play().then(() => { sonidoVictoria.pause(); sonidoVictoria.currentTime = 0; }).catch(e=>{});
 
@@ -252,7 +250,6 @@
             });
         }
 
-        // 3. Al escanear un QR
         function onScanSuccess(decodedText) {
             const feedback = document.getElementById('feedback');
             const estacionEncontrada = estaciones.find(est => est.codigoFisico === decodedText);
@@ -267,12 +264,11 @@
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
-                    // === EFECTOS DE ESCANEO ===
-                    // 1. Sonido Gracioso ("Boing")
-                    sonidoEscaneo.currentTime = 0;
-                    sonidoEscaneo.play().catch(e => console.log("Audio no permitido", e));
-                    // 2. Vibración del celular (dos pulsos rápidos)
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                    if (codigosEscaneados.size < estaciones.length) {
+                        sonidoEscaneo.currentTime = 0;
+                        sonidoEscaneo.play().catch(e => console.log(e));
+                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                    }
 
                     verificarVictoria();
                 } else {
@@ -292,9 +288,15 @@
             }, 3000);
         }
 
-        // 4. Verificar si completó las 4
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
+                
+                sonidoVictoria.currentTime = 0;
+                sonidoVictoria.play().catch(e => console.log(e));
+                
+                if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
+                lanzarConfetti();
+
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-section').style.display = 'none';
                     document.getElementById('app-header').style.display = 'none';
@@ -302,45 +304,24 @@
                     
                     let pantallaExito = document.getElementById('pantalla-exito');
                     pantallaExito.style.display = 'flex';
-
-                    // === EFECTOS DE VICTORIA ===
-                    // 1. Sonido de Aplausos
-                    sonidoVictoria.currentTime = 0;
-                    sonidoVictoria.play().catch(e => console.log("Audio no permitido", e));
-                    
-                    // 2. Vibración larga de festejo
-                    if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
-                    
-                    // 3. Lluvia de Papel Picado (Fuegos Artificiales)
-                    lanzarConfetti();
-
                 }).catch(err => console.log("Error apagando cámara", err));
             }
         }
 
-        // 5. Función para animar el papel picado
         function lanzarConfetti() {
             var duration = 3000;
             var end = Date.now() + duration;
 
             (function frame() {
-                // Lanza confetti desde el lado izquierdo
                 confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#00a046', '#ffd700', '#ff0000'] });
-                // Lanza confetti desde el lado derecho
                 confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#00a046', '#ffd700', '#ff0000'] });
-
-                if (Date.now() < end) {
-                    requestAnimationFrame(frame);
-                }
+                if (Date.now() < end) requestAnimationFrame(frame);
             }());
         }
 
-        // 6. Acción del Botón Final
         function revelarMensajeFinal() {
-            document.getElementById('btn-souvenir').style.display = 'none';
-            document.getElementById('mensaje-despedida').style.display = 'block';
-            
-            // Extra vibración cortita al tocar el botón
+            // El mensaje oculto se revela en formato flex para ocupar y centrar todo en la pantalla
+            document.getElementById('mensaje-despedida').style.display = 'flex';
             if (navigator.vibrate) navigator.vibrate(100);
         }
     </script>
