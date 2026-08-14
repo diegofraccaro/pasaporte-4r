@@ -2,13 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Etiquetas clave para forzar la pantalla completa y evitar zoom accidental -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    
     <title>Pasaporte 4R</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Librería pura para leer QR -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
@@ -26,7 +23,6 @@
             padding: 0;
             display: flex;
             justify-content: center;
-            /* Evita el scroll horizontal */
             overflow-x: hidden; 
         }
 
@@ -34,182 +30,96 @@
             width: 100%;
             max-width: 600px;
             background-color: white;
-            /* 100dvh asegura que ocupe exactamente la pantalla visible del celular sin importar la barra de navegación */
             min-height: 100dvh;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             padding: 25px 20px;
             box-sizing: border-box;
         }
 
-        /* Encabezado Maximizado */
-        header { 
-            text-align: center; 
-            margin-bottom: 15px; 
-        }
-        h1 { 
-            color: var(--primary-green); 
-            font-size: 34px; /* Más grande */
-            margin: 0 0 10px 0; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            gap: 10px; 
-        }
-        p { 
-            font-size: 17px; /* Más legible */
-            color: #555; 
-            margin: 0; 
-            line-height: 1.5; 
-            font-weight: 600;
-        }
+        header { text-align: center; margin-bottom: 15px; }
+        h1 { color: var(--primary-green); font-size: 34px; margin: 0 0 10px 0; }
+        p { font-size: 17px; color: #555; margin: 0; line-height: 1.5; font-weight: 600;}
 
-        /* Escáner Maximizado */
+        /* Controles de la cámara personalizados */
         .scanner-section {
             background: white;
             border-radius: 30px;
             padding: 15px;
             box-shadow: 0 8px 30px rgba(0, 160, 70, 0.15);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
         }
+
         #reader { 
             width: 100%; 
-            border-radius: 25px; 
+            min-height: 250px;
+            border-radius: 20px; 
             overflow: hidden; 
-            border: none !important; 
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
+
         #reader video { 
             object-fit: cover; 
-            border-radius: 25px; 
+            border-radius: 20px; 
+            width: 100% !important;
         }
-        
+
+        /* Nuestro propio botón para encender la cámara */
+        .btn-iniciar-camara {
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 160, 70, 0.4);
+            font-family: 'Poppins', sans-serif;
+            margin: 20px 0;
+            width: 80%;
+        }
+
         #feedback { 
-            text-align: center; 
-            font-weight: 700; 
-            font-size: 18px; /* Texto de respuesta más grande */
-            margin-top: 20px; 
-            min-height: 27px; 
-            color: var(--primary-green); 
+            text-align: center; font-weight: 700; font-size: 18px; 
+            margin-top: 15px; min-height: 27px; color: var(--primary-green); 
         }
 
-        /* Tablero de Progreso Maximizado */
+        /* Tablero de Progreso (Ahora adaptado para 4 opciones) */
         .badges-container {
-            display: flex; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            gap: 20px; /* Más separación */
-            padding: 20px 10px; 
-            background: white; 
-            border-radius: 30px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-bottom: 10px;
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; 
+            padding: 20px 10px; background: white; border-radius: 30px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-top: auto;
         }
 
-        .badge-wrapper { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            position: relative; 
-            width: 85px; /* Contenedor más ancho */
-            gap: 8px; 
-        }
-        
-        .badge-circle {
-            width: 75px; /* Círculo mucho más grande */
-            height: 75px; 
-            border-radius: 50%; 
-            border: 4px solid var(--grey-inactive); /* Borde más grueso */
-            color: var(--grey-inactive); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            font-size: 30px; /* Número más grande */
-            font-weight: 700; 
-            background-color: white; 
-            transition: all 0.4s ease;
-        }
-        
-        .badge-label { 
-            font-size: 11px; /* Etiqueta más grande */
-            font-weight: 700; 
-            color: var(--grey-inactive); 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-        }
-        
-        .badge-check {
-            position: absolute; 
-            top: -4px; 
-            right: 0px; 
-            background-color: white; 
-            color: var(--primary-green); 
-            width: 28px; /* Tilde más grande */
-            height: 28px; 
-            border-radius: 50%; 
-            display: none; 
-            justify-content: center; 
-            align-items: center; 
-            font-size: 16px; 
-            font-weight: bold; 
-            box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-        }
+        .badge-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; width: 85px; gap: 8px; }
+        .badge-circle { width: 75px; height: 75px; border-radius: 50%; border: 4px solid var(--grey-inactive); color: var(--grey-inactive); display: flex; justify-content: center; align-items: center; font-size: 30px; font-weight: 700; background-color: white; transition: all 0.4s ease; }
+        .badge-label { font-size: 11px; font-weight: 700; color: var(--grey-inactive); text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-check { position: absolute; top: -4px; right: 0px; background-color: white; color: var(--primary-green); width: 28px; height: 28px; border-radius: 50%; display: none; justify-content: center; align-items: center; font-size: 16px; font-weight: bold; box-shadow: 0 3px 8px rgba(0,0,0,0.25); }
 
-        .badge-wrapper.active .badge-circle { 
-            background-color: var(--primary-green); 
-            border-color: var(--primary-green); 
-            color: white; 
-        }
-        .badge-wrapper.active .badge-label { 
-            color: var(--primary-green); 
-        }
-        .badge-wrapper.active .badge-check { 
-            display: flex; 
-        }
+        .badge-wrapper.active .badge-circle { background-color: var(--primary-green); border-color: var(--primary-green); color: white; }
+        .badge-wrapper.active .badge-label { color: var(--primary-green); }
+        .badge-wrapper.active .badge-check { display: flex; }
 
         /* Pantalla de Éxito Final */
         #pantalla-exito { 
-            display: none; 
-            text-align: center; 
-            padding: 50px 20px; 
+            display: none; text-align: center; padding: 50px 20px; 
             animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            flex-grow: 1;
-            justify-content: center;
-            flex-direction: column;
+            flex-grow: 1; justify-content: center; flex-direction: column;
         }
-        #pantalla-exito h2 { 
-            color: var(--primary-green); 
-            font-size: 36px; /* Título final enorme */
-            margin-bottom: 15px; 
-        }
-        #pantalla-exito p {
-            font-size: 20px;
-            margin-bottom: 30px;
-        }
-        .btn-descarga { 
-            display: inline-block; 
-            background-color: var(--primary-green); 
-            color: white; 
-            text-decoration: none; 
-            padding: 20px 40px; /* Botón gigante */
-            border-radius: 40px; 
-            font-weight: 700; 
-            font-size: 20px; 
-            box-shadow: 0 8px 25px rgba(0, 160, 70, 0.4); 
-            transition: transform 0.2s; 
-        }
-        .btn-descarga:active { 
-            transform: scale(0.95); 
-        }
-        @keyframes popIn { 
-            0% { opacity: 0; transform: scale(0.8); } 
-            100% { opacity: 1; transform: scale(1); } 
-        }
-        #reader__dashboard_section_csr span { display: none !important; }
+        #pantalla-exito h2 { color: var(--primary-green); font-size: 36px; margin-bottom: 15px; }
+        #pantalla-exito p { font-size: 20px; margin-bottom: 30px; }
+        .btn-descarga { display: inline-block; background-color: var(--primary-green); color: white; text-decoration: none; padding: 20px 40px; border-radius: 40px; font-weight: 700; font-size: 20px; box-shadow: 0 8px 25px rgba(0, 160, 70, 0.4); transition: transform 0.2s; }
+        .btn-descarga:active { transform: scale(0.95); }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -217,13 +127,16 @@
     <div class="app-container">
         
         <header id="app-header">
-            <h1>🌎 Pasaporte 4R 🌿</h1>
-            <p>Escaneá los códigos de cada grado para tu sorpresa.</p>
+            <h1>🌎 Muestra 4R 🌿</h1>
+            <p>Escaneá los 4 códigos para descubrir tu sorpresa.</p>
         </header>
 
         <div class="scanner-section" id="scanner-section">
-            <div id="reader"></div>
-            <div id="feedback">Apuntá al código QR...</div>
+            <div id="reader">
+                <!-- Botón propio que forza el encendido -->
+                <button id="btn-iniciar" class="btn-iniciar-camara" onclick="iniciarCamara()">📷 Activar Cámara</button>
+            </div>
+            <div id="feedback">Presioná el botón para comenzar</div>
         </div>
 
         <div class="badges-container" id="badges-container">
@@ -232,7 +145,7 @@
 
         <div id="pantalla-exito">
             <h2>¡Misión Cumplida! 🎉</h2>
-            <p>Recorriste las 7 estaciones y demostraste tu compromiso con el planeta.</p>
+            <p>Completaste las 4 estaciones de nuestro proyecto.</p>
             <!-- REEMPLAZAR AQUÍ TU ENLACE DE DESCARGA -->
             <a href="https://tu-enlace-al-souvenir.com" target="_blank" class="btn-descarga">
                 📥 Obtener Souvenir
@@ -242,21 +155,19 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE LAS ESTACIONES (Textos que deben estar en los QR)
+        // REDUCIDO A SOLO 4 ESTACIONES
         const estaciones = [
-            { id: "grado1", titulo: "1°", codigoFisico: "REDUCIR" },
-            { id: "grado2", titulo: "2°", codigoFisico: "REUTILIZAR" },
-            { id: "grado3", titulo: "3°", codigoFisico: "RECICLAR" },
-            { id: "grado4", titulo: "4°", codigoFisico: "RECUPERAR" },
-            { id: "grado5", titulo: "5°", codigoFisico: "🌿" },       
-            { id: "grado6", titulo: "6°", codigoFisico: "COMPOST" },
-            { id: "grado7", titulo: "7°", codigoFisico: "TIERRA" }
+            { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
+            { id: "estacion2", titulo: "2°", codigoFisico: "REUTILIZAR" },
+            { id: "estacion3", titulo: "3°", codigoFisico: "RECICLAR" },
+            { id: "estacion4", titulo: "4°", codigoFisico: "RECUPERAR" }
         ];
 
         let codigosEscaneados = new Set();
         const badgesContainer = document.getElementById('badges-container');
+        let html5QrCode; // Variable global para la cámara
         
-        // 1. Generar la interfaz
+        // 1. Generar la interfaz para las 4 opciones
         estaciones.forEach((estacion) => {
             let wrapper = document.createElement('div');
             wrapper.className = 'badge-wrapper';
@@ -281,8 +192,34 @@
             badgesContainer.appendChild(wrapper);
         });
 
-        // 2. Lógica de Escaneo
-        function onScanSuccess(decodedText, decodedResult) {
+        // 2. Nueva función para forzar el encendido de la cámara trasera
+        function iniciarCamara() {
+            const btn = document.getElementById('btn-iniciar');
+            const feedback = document.getElementById('feedback');
+            
+            btn.style.display = 'none'; // Ocultamos nuestro botón
+            feedback.innerText = "Cargando cámara...";
+
+            // Usamos la clase directa, sin la interfaz por defecto de la librería
+            html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" }, // Forza la cámara trasera
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                (errorMessage) => { /* Ignoramos errores de escaneo en curso */ }
+            ).then(() => {
+                feedback.innerText = "Apuntá al código QR...";
+            }).catch((err) => {
+                // Si falla (por permisos o error del navegador)
+                btn.style.display = 'block';
+                feedback.innerText = "Error: Verifica los permisos de la cámara.";
+                console.log(err);
+            });
+        }
+
+        // 3. Lógica al leer un QR
+        function onScanSuccess(decodedText) {
             const feedback = document.getElementById('feedback');
             const estacionEncontrada = estaciones.find(est => est.codigoFisico === decodedText);
 
@@ -293,12 +230,12 @@
                     document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
                     document.getElementById(`label-${estacionEncontrada.id}`).innerText = 'COMPLETO';
                     
-                    feedback.innerText = `¡${estacionEncontrada.titulo} Grado registrado!`;
+                    feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
                     verificarVictoria();
                 } else {
-                    feedback.innerText = `¡Ya visitaste ${estacionEncontrada.titulo}!`;
+                    feedback.innerText = `¡Ya visitaste la estación ${estacionEncontrada.titulo}!`;
                     feedback.style.color = "#d97706";
                 }
             } else {
@@ -306,9 +243,10 @@
                 feedback.style.color = "#dc2626";
             }
             
+            // Regresar texto a la normalidad
             setTimeout(() => {
                 if(codigosEscaneados.size < estaciones.length) {
-                    feedback.innerText = "Buscando el siguiente QR...";
+                    feedback.innerText = "Apuntá al siguiente QR...";
                     feedback.style.color = "var(--text-dark)";
                 }
             }, 3000);
@@ -316,23 +254,17 @@
 
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
-                html5QrcodeScanner.clear();
-                document.getElementById('scanner-section').style.display = 'none';
-                document.getElementById('app-header').style.display = 'none';
-                document.getElementById('badges-container').style.display = 'none';
-                
-                let pantallaExito = document.getElementById('pantalla-exito');
-                pantallaExito.style.display = 'flex';
+                // Apagar la cámara correctamente
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scanner-section').style.display = 'none';
+                    document.getElementById('app-header').style.display = 'none';
+                    document.getElementById('badges-container').style.display = 'none';
+                    
+                    let pantallaExito = document.getElementById('pantalla-exito');
+                    pantallaExito.style.display = 'flex';
+                }).catch(err => console.log("Error apagando cámara", err));
             }
         }
-
-        function onScanFailure(error) { }
-
-        // Iniciar la cámara (aspectRatio ajustado para hacer el recuadro de escaneo más amigable)
-        let html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", { fps: 10, qrbox: {width: 280, height: 280}, aspectRatio: 1.0 }, false
-        );
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     </script>
 </body>
 </html>
