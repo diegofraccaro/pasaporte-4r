@@ -124,31 +124,31 @@
         }
         .btn-descarga:active { transform: scale(0.95); }
         
-        /* === NUEVO MENSAJE DESPEDIDA PANTALLA COMPLETA === */
+        /* === MENSAJE DESPEDIDA MEJORADO Y GIGANTE === */
         #mensaje-despedida {
-            display: none; /* Se activará como 'flex' desde JS */
-            position: fixed; /* Lo despega del flujo normal */
-            top: 0; left: 0; width: 100vw; height: 100dvh; /* Cubre toda la pantalla */
-            z-index: 9999; /* Se asegura de estar por encima de TODO */
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100vw; height: 100dvh; 
+            z-index: 9999; 
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 40px;
+            padding: 20px;
             box-sizing: border-box;
-            color: #333;
-            font-size: 32px; /* 50% más grande */
+            color: #111; /* Texto un poco más oscuro para contrastar con los colores flúor */
+            font-size: 64px; /* 100% MÁS GRANDE */
             font-weight: 700;
-            line-height: 1.4;
-            /* La animación llamará a los 3 colores infinitamente */
-            animation: popIn 0.5s ease-out, alternarFondo 4s infinite alternate;
+            line-height: 1.3;
+            /* Animación al doble de velocidad (2 segundos) */
+            animation: popIn 0.5s ease-out, alternarFondo 2s infinite alternate;
         }
 
-        /* Animación para los 3 colores alternados */
+        /* Colores súper vibrantes (Neón) */
         @keyframes alternarFondo {
-            0% { background-color: #FFD700; }   /* Dorado */
-            50% { background-color: #A7FFEB; }  /* Verde menta vibrante */
-            100% { background-color: #FFCDD2; } /* Rosado suave */
+            0% { background-color: #FFEA00; }   /* Amarillo Eléctrico */
+            50% { background-color: #00FFEA; }  /* Cian / Menta Fluorescente */
+            100% { background-color: #FF007F; } /* Fucsia / Magenta Vibrante */
         }
 
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
@@ -179,16 +179,17 @@
             <button id="btn-souvenir" class="btn-descarga" onclick="revelarMensajeFinal()">🎁 Obtener Souvenir</button>
         </div>
 
-        <!-- El mensaje ahora está fuera del contenedor para cubrir todo -->
+        <!-- Mensaje final con los textos enormes -->
         <div id="mensaje-despedida">
-            <span>¡Gracias por participar! 🙌</span><br><br>
-            <span style="font-size: 26px; font-weight: 600;">Podés pasar a buscar tu Souvenir mostrando esta pantalla por la salida.</span>
+            <span>¡Gracias por participar! 🙌</span><br>
+            <span style="font-size: 45px; font-weight: 600; margin-top: 20px; display: inline-block;">Podés pasar a buscar tu Souvenir mostrando esta pantalla por la salida.</span>
         </div>
     </div>
 
     <script>
-        const sonidoEscaneo = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-        const sonidoVictoria = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
+        // Audios oficiales de Google (mucho más estables y no se bloquean)
+        const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+        const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
 
         // RECUERDA: Aquí defines tus 4 palabras ocultas (o emojis)
         const estaciones = [
@@ -230,6 +231,7 @@
             const btn = document.getElementById('btn-iniciar');
             const feedback = document.getElementById('feedback');
             
+            // Truco indispensable para que los celulares permitan el sonido
             sonidoEscaneo.play().then(() => { sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; }).catch(e=>{});
             sonidoVictoria.play().then(() => { sonidoVictoria.pause(); sonidoVictoria.currentTime = 0; }).catch(e=>{});
 
@@ -264,10 +266,14 @@
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
+                    // === ACCIÓN AL ESCANEAR CÓDIGOS DEL 1 AL 3 ===
                     if (codigosEscaneados.size < estaciones.length) {
+                        // Sonido gracioso Boing
                         sonidoEscaneo.currentTime = 0;
                         sonidoEscaneo.play().catch(e => console.log(e));
-                        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                        
+                        // Vibración fuerte y notoria por cada escaneo
+                        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     }
 
                     verificarVictoria();
@@ -289,12 +295,17 @@
         }
 
         function verificarVictoria() {
+            // === ACCIÓN AL ESCANEAR EL 4TO CÓDIGO (FINAL) ===
             if (codigosEscaneados.size === estaciones.length) {
                 
+                // Dispara los aplausos simultáneamente
                 sonidoVictoria.currentTime = 0;
                 sonidoVictoria.play().catch(e => console.log(e));
                 
-                if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 500]);
+                // Vibración larga y festiva
+                if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 600]);
+                
+                // Dispara el papel picado simultáneamente
                 lanzarConfetti();
 
                 html5QrCode.stop().then(() => {
@@ -320,7 +331,6 @@
         }
 
         function revelarMensajeFinal() {
-            // El mensaje oculto se revela en formato flex para ocupar y centrar todo en la pantalla
             document.getElementById('mensaje-despedida').style.display = 'flex';
             if (navigator.vibrate) navigator.vibrate(100);
         }
