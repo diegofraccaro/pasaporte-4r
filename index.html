@@ -44,14 +44,13 @@
         h1 { color: var(--primary-green); font-size: 32px; margin: 0 0 5px 0; }
         p { font-size: 15px; color: #555; margin: 0; line-height: 1.4; font-weight: 600;}
 
-        /* Tablero de Progreso AHORA ARRIBA de la cámara */
+        /* Tablero de Progreso ARRIBA */
         .badges-container {
             display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; 
             padding: 15px 10px; background: white; border-radius: 25px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 15px;
         }
 
-        /* Redujimos un poco el tamaño para que entren siempre en pantalla */
         .badge-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; width: 70px; gap: 6px; }
         .badge-circle { width: 60px; height: 60px; border-radius: 50%; border: 4px solid var(--grey-inactive); color: var(--grey-inactive); display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 700; background-color: white; transition: all 0.4s ease; }
         .badge-label { font-size: 10px; font-weight: 700; color: var(--grey-inactive); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -61,7 +60,7 @@
         .badge-wrapper.active .badge-label { color: var(--primary-green); }
         .badge-wrapper.active .badge-check { display: flex; }
 
-        /* Controles de la cámara AHORA ABAJO */
+        /* Controles de la cámara ABAJO */
         .scanner-section {
             background: white;
             border-radius: 30px;
@@ -72,7 +71,7 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            flex-grow: 1; /* Para que ocupe el espacio restante */
+            flex-grow: 1; 
         }
 
         #reader { 
@@ -89,7 +88,7 @@
             object-fit: cover; 
             border-radius: 20px; 
             width: 100% !important;
-            max-height: 40vh; /* Limita la altura para que no empuje los botones */
+            max-height: 40vh; 
         }
 
         .btn-iniciar-camara {
@@ -164,7 +163,6 @@
             <p>Escaneá los 4 códigos para descubrir tu sorpresa.</p>
         </header>
 
-        <!-- AHORA LOS BOTONES ESTÁN ARRIBA -->
         <div class="badges-container" id="badges-container">
             <!-- Círculos generados por JS -->
         </div>
@@ -189,9 +187,9 @@
     </div>
 
     <script>
-        // ARCHIVOS MP3 ESTABLES Y COMPATIBLES CON TODOS LOS TELÉFONOS
-        const sonidoEscaneo = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-        const sonidoVictoria = new Audio('https://www.soundjay.com/human/sounds/applause-01.mp3');
+        // ARCHIVOS OFICIALES DE GOOGLE (Sin bloqueos)
+        const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+        const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
 
         const estaciones = [
             { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
@@ -232,9 +230,16 @@
             const btn = document.getElementById('btn-iniciar');
             const feedback = document.getElementById('feedback');
             
-            // Truco para iOS: Permite los sonidos al hacer el primer click
-            sonidoEscaneo.play().then(() => { sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; }).catch(e=>{});
-            sonidoVictoria.play().then(() => { sonidoVictoria.pause(); sonidoVictoria.currentTime = 0; }).catch(e=>{});
+            // TRUCO DE DESBLOQUEO SILENCIOSO PARA QUE EL CELULAR AUTORICE LOS AUDIOS LUEGO
+            sonidoEscaneo.volume = 0;
+            sonidoEscaneo.play().then(() => { 
+                sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; sonidoEscaneo.volume = 1; 
+            }).catch(e=>{});
+            
+            sonidoVictoria.volume = 0;
+            sonidoVictoria.play().then(() => { 
+                sonidoVictoria.pause(); sonidoVictoria.currentTime = 0; sonidoVictoria.volume = 1; 
+            }).catch(e=>{});
 
             btn.style.display = 'none'; 
             feedback.innerText = "Cargando cámara...";
@@ -268,8 +273,10 @@
                     feedback.style.color = "var(--primary-green)";
 
                     if (codigosEscaneados.size < estaciones.length) {
+                        // REPRODUCE EL BOING PARA ESTACIONES 1, 2 Y 3
                         sonidoEscaneo.currentTime = 0;
                         sonidoEscaneo.play().catch(e => console.log(e));
+                        
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     }
 
@@ -294,16 +301,14 @@
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
                 
-                // Dispara los aplausos 
+                // DISPARA LOS APLAUSOS INMEDIATAMENTE AL LEER EL 4TO CÓDIGO
                 sonidoVictoria.currentTime = 0;
                 sonidoVictoria.play().catch(e => console.log(e));
                 
-                // Vibración larga 
                 if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 600]);
-                
-                // Papel picado
                 lanzarConfetti();
 
+                // DESPUÉS APAGA LA CÁMARA (Así evitamos que el navegador bloquee el audio)
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-section').style.display = 'none';
                     document.getElementById('app-header').style.display = 'none';
