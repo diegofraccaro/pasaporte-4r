@@ -109,6 +109,19 @@
         #feedback { 
             text-align: center; font-weight: 700; font-size: 16px; 
             margin-top: 15px; min-height: 25px; color: var(--primary-green); 
+            transition: all 0.2s ease;
+        }
+
+        /* === NUEVA CLASE PARA TEXTO REPETIDO (MÁS GRANDE Y TITILANDO) === */
+        @keyframes titilar {
+            0% { opacity: 1; }
+            50% { opacity: 0.1; }
+            100% { opacity: 1; }
+        }
+        .alerta-repetido {
+            font-size: 40px !important; /* 150% más grande que los 16px base */
+            line-height: 1.1;
+            animation: titilar 0.5s infinite;
         }
 
         #pantalla-exito { 
@@ -269,6 +282,9 @@
                     document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
                     document.getElementById(`label-${estacionEncontrada.id}`).innerText = 'COMPLETO';
                     
+                    // Nos aseguramos de quitar la clase de parpadeo si escanea uno correcto
+                    feedback.classList.remove("alerta-repetido");
+                    
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
@@ -282,10 +298,13 @@
 
                     verificarVictoria();
                 } else {
+                    // === AQUÍ SE ACTIVA EL TEXTO GIGANTE Y TITILANTE ===
                     feedback.innerText = `¡Ya visitaste la estación ${estacionEncontrada.titulo}!`;
                     feedback.style.color = "#d97706";
+                    feedback.classList.add("alerta-repetido");
                 }
             } else {
+                feedback.classList.remove("alerta-repetido");
                 feedback.innerText = "Código incorrecto para esta muestra.";
                 feedback.style.color = "#dc2626";
             }
@@ -294,6 +313,9 @@
                 if(codigosEscaneados.size < estaciones.length) {
                     feedback.innerText = "Apuntá al siguiente QR...";
                     feedback.style.color = "var(--text-dark)";
+                    
+                    // Quitamos la clase para que el texto vuelva a su tamaño normal
+                    feedback.classList.remove("alerta-repetido");
                 }
             }, 3000);
         }
