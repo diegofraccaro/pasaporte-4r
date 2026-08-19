@@ -192,10 +192,10 @@
         const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
 
         const estaciones = [
-            { id: "estacion1", titulo: "1°", nombreAMostrar: "Reducir", codigoFisico: "REDUCIR" },
-            { id: "estacion2", titulo: "2°", nombreAMostrar: "Reutilizar", codigoFisico: "REUTILIZAR" },
-            { id: "estacion3", titulo: "3°", nombreAMostrar: "Reciclar", codigoFisico: "RECICLAR" },
-            { id: "estacion4", titulo: "4°", nombreAMostrar: "Recuperar", codigoFisico: "RECUPERAR" }
+            { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
+            { id: "estacion2", titulo: "2°", codigoFisico: "REUTILIZAR" },
+            { id: "estacion3", titulo: "3°", codigoFisico: "RECICLAR" },
+            { id: "estacion4", titulo: "4°", codigoFisico: "RECUPERAR" }
         ];
 
         let codigosEscaneados = new Set();
@@ -218,7 +218,7 @@
             let label = document.createElement('div');
             label.className = 'badge-label';
             label.id = `label-${estacion.id}`;
-            label.innerText = estacion.nombreAMostrar; 
+            label.innerText = 'INCOMPLETO';
 
             circle.appendChild(check);
             wrapper.appendChild(circle);
@@ -267,6 +267,7 @@
                     codigosEscaneados.add(estacionEncontrada.id);
                     
                     document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
+                    document.getElementById(`label-${estacionEncontrada.id}`).innerText = 'COMPLETO';
                     
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
@@ -300,8 +301,7 @@
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
                 
-                // DISPARA LOS APLAUSOS INMEDIATAMENTE Y EN BUCLE AL LEER EL 4TO CÓDIGO
-                sonidoVictoria.loop = true;
+                // DISPARA LOS APLAUSOS INMEDIATAMENTE AL LEER EL 4TO CÓDIGO
                 sonidoVictoria.currentTime = 0;
                 sonidoVictoria.play().catch(e => console.log(e));
                 
@@ -332,9 +332,6 @@
         }
 
         function revelarMensajeFinal() {
-            // DETIENE LOS APLAUSOS AL TOCAR EL BOTÓN
-            sonidoVictoria.pause();
-
             document.getElementById('mensaje-despedida').style.display = 'flex';
             if (navigator.vibrate) navigator.vibrate(100);
         }
