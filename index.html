@@ -200,11 +200,13 @@
     </div>
 
     <script>
-        // ARCHIVOS OFICIALES DE GOOGLE (Sin bloqueos)
+        // SONIDO DE ESCANEO ORIGINAL (Que te funcionaba bien)
         const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
-        const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
+        
+        // NUEVO ARCHIVO DE APLAUSOS (Formato MP3 universal desde servidor estable)
+        const sonidoVictoria = new Audio('https://www.myinstants.com/media/sounds/applause.mp3');
 
-        // AHORA LAS ESTACIONES INCLUYEN "nombreAMostrar"
+        // LAS 4 ESTACIONES CON SUS NOMBRES
         const estaciones = [
             { id: "estacion1", titulo: "1°", nombreAMostrar: "Reducir", codigoFisico: "REDUCIR" },
             { id: "estacion2", titulo: "2°", nombreAMostrar: "Reutilizar", codigoFisico: "REUTILIZAR" },
@@ -232,7 +234,6 @@
             let label = document.createElement('div');
             label.className = 'badge-label';
             label.id = `label-${estacion.id}`;
-            // MUESTRA EL NOMBRE ESPECÍFICO EN LUGAR DE "INCOMPLETO"
             label.innerText = estacion.nombreAMostrar; 
 
             circle.appendChild(check);
@@ -245,7 +246,7 @@
             const btn = document.getElementById('btn-iniciar');
             const feedback = document.getElementById('feedback');
             
-            // TRUCO DE DESBLOQUEO SILENCIOSO PARA QUE EL CELULAR AUTORICE LOS AUDIOS LUEGO
+            // TRUCO DE DESBLOQUEO DE AUDIO
             sonidoEscaneo.volume = 0;
             sonidoEscaneo.play().then(() => { 
                 sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; sonidoEscaneo.volume = 1; 
@@ -281,26 +282,21 @@
                 if (!codigosEscaneados.has(estacionEncontrada.id)) {
                     codigosEscaneados.add(estacionEncontrada.id);
                     
-                    // ACTIVA EL ESTADO (El círculo y el texto cambian a verde gracias al CSS)
                     document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
                     
-                    // Nos aseguramos de quitar la clase de parpadeo si escanea uno correcto
                     feedback.classList.remove("alerta-repetido");
                     
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
                     if (codigosEscaneados.size < estaciones.length) {
-                        // REPRODUCE EL BOING PARA ESTACIONES 1, 2 Y 3
                         sonidoEscaneo.currentTime = 0;
                         sonidoEscaneo.play().catch(e => console.log(e));
-                        
                         if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
                     }
 
                     verificarVictoria();
                 } else {
-                    // TEXTO GIGANTE Y TITILANTE PARA REPETIDOS
                     feedback.innerText = `¡Ya visitaste la estación ${estacionEncontrada.titulo}!`;
                     feedback.style.color = "#d97706";
                     feedback.classList.add("alerta-repetido");
@@ -315,8 +311,6 @@
                 if(codigosEscaneados.size < estaciones.length) {
                     feedback.innerText = "Apuntá al siguiente QR...";
                     feedback.style.color = "var(--text-dark)";
-                    
-                    // Quitamos la clase para que el texto vuelva a su tamaño normal
                     feedback.classList.remove("alerta-repetido");
                 }
             }, 3000);
@@ -325,16 +319,14 @@
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
                 
-                // DISPARA LOS APLAUSOS INMEDIATAMENTE AL LEER EL 4TO CÓDIGO
+                // DISPARA LOS APLAUSOS INMEDIATAMENTE Y EN BUCLE AL LEER EL 4TO CÓDIGO
+                sonidoVictoria.loop = true;
                 sonidoVictoria.currentTime = 0;
-                // SI DESEAS QUE LOS APLAUSOS SE REPITAN EN BUCLE, DESCOMENTA LA SIGUIENTE LÍNEA:
-                // sonidoVictoria.loop = true;
                 sonidoVictoria.play().catch(e => console.log(e));
                 
                 if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 600]);
                 lanzarConfetti();
 
-                // DESPUÉS APAGA LA CÁMARA 
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-section').style.display = 'none';
                     document.getElementById('app-header').style.display = 'none';
@@ -358,8 +350,8 @@
         }
 
         function revelarMensajeFinal() {
-            // SI ACTIVASTE EL BUCLE DE APLAUSOS ARRIBA, DESCOMENTA ESTO PARA PAUSARLOS:
-            // sonidoVictoria.pause();
+            // DETIENE LOS APLAUSOS AL TOCAR EL BOTÓN
+            sonidoVictoria.pause();
 
             document.getElementById('mensaje-despedida').style.display = 'flex';
             if (navigator.vibrate) navigator.vibrate(100);
