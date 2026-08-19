@@ -109,6 +109,19 @@
         #feedback { 
             text-align: center; font-weight: 700; font-size: 16px; 
             margin-top: 15px; min-height: 25px; color: var(--primary-green); 
+            transition: all 0.2s ease;
+        }
+
+        /* TEXTO REPETIDO (MÁS GRANDE Y TITILANDO) */
+        @keyframes titilar {
+            0% { opacity: 1; }
+            50% { opacity: 0.1; }
+            100% { opacity: 1; }
+        }
+        .alerta-repetido {
+            font-size: 40px !important; 
+            line-height: 1.1;
+            animation: titilar 0.5s infinite;
         }
 
         #pantalla-exito { 
@@ -191,11 +204,12 @@
         const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
         const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
 
+        // AHORA LAS ESTACIONES INCLUYEN "nombreAMostrar"
         const estaciones = [
-            { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
-            { id: "estacion2", titulo: "2°", codigoFisico: "REUTILIZAR" },
-            { id: "estacion3", titulo: "3°", codigoFisico: "RECICLAR" },
-            { id: "estacion4", titulo: "4°", codigoFisico: "RECUPERAR" }
+            { id: "estacion1", titulo: "1°", nombreAMostrar: "Reducir", codigoFisico: "REDUCIR" },
+            { id: "estacion2", titulo: "2°", nombreAMostrar: "Reutilizar", codigoFisico: "REUTILIZAR" },
+            { id: "estacion3", titulo: "3°", nombreAMostrar: "Reciclar", codigoFisico: "RECICLAR" },
+            { id: "estacion4", titulo: "4°", nombreAMostrar: "Recuperar", codigoFisico: "RECUPERAR" }
         ];
 
         let codigosEscaneados = new Set();
@@ -218,7 +232,8 @@
             let label = document.createElement('div');
             label.className = 'badge-label';
             label.id = `label-${estacion.id}`;
-            label.innerText = 'INCOMPLETO';
+            // MUESTRA EL NOMBRE ESPECÍFICO EN LUGAR DE "INCOMPLETO"
+            label.innerText = estacion.nombreAMostrar; 
 
             circle.appendChild(check);
             wrapper.appendChild(circle);
@@ -266,8 +281,11 @@
                 if (!codigosEscaneados.has(estacionEncontrada.id)) {
                     codigosEscaneados.add(estacionEncontrada.id);
                     
+                    // ACTIVA EL ESTADO (El círculo y el texto cambian a verde gracias al CSS)
                     document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
-                    document.getElementById(`label-${estacionEncontrada.id}`).innerText = 'COMPLETO';
+                    
+                    // Nos aseguramos de quitar la clase de parpadeo si escanea uno correcto
+                    feedback.classList.remove("alerta-repetido");
                     
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
@@ -282,10 +300,13 @@
 
                     verificarVictoria();
                 } else {
+                    // TEXTO GIGANTE Y TITILANTE PARA REPETIDOS
                     feedback.innerText = `¡Ya visitaste la estación ${estacionEncontrada.titulo}!`;
                     feedback.style.color = "#d97706";
+                    feedback.classList.add("alerta-repetido");
                 }
             } else {
+                feedback.classList.remove("alerta-repetido");
                 feedback.innerText = "Código incorrecto para esta muestra.";
                 feedback.style.color = "#dc2626";
             }
@@ -294,6 +315,9 @@
                 if(codigosEscaneados.size < estaciones.length) {
                     feedback.innerText = "Apuntá al siguiente QR...";
                     feedback.style.color = "var(--text-dark)";
+                    
+                    // Quitamos la clase para que el texto vuelva a su tamaño normal
+                    feedback.classList.remove("alerta-repetido");
                 }
             }, 3000);
         }
@@ -303,12 +327,14 @@
                 
                 // DISPARA LOS APLAUSOS INMEDIATAMENTE AL LEER EL 4TO CÓDIGO
                 sonidoVictoria.currentTime = 0;
+                // SI DESEAS QUE LOS APLAUSOS SE REPITAN EN BUCLE, DESCOMENTA LA SIGUIENTE LÍNEA:
+                // sonidoVictoria.loop = true;
                 sonidoVictoria.play().catch(e => console.log(e));
                 
                 if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 600]);
                 lanzarConfetti();
 
-                // DESPUÉS APAGA LA CÁMARA (Así evitamos que el navegador bloquee el audio)
+                // DESPUÉS APAGA LA CÁMARA 
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-section').style.display = 'none';
                     document.getElementById('app-header').style.display = 'none';
@@ -332,6 +358,9 @@
         }
 
         function revelarMensajeFinal() {
+            // SI ACTIVASTE EL BUCLE DE APLAUSOS ARRIBA, DESCOMENTA ESTO PARA PAUSARLOS:
+            // sonidoVictoria.pause();
+
             document.getElementById('mensaje-despedida').style.display = 'flex';
             if (navigator.vibrate) navigator.vibrate(100);
         }
