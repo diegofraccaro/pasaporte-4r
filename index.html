@@ -57,7 +57,7 @@
         .badge-check { position: absolute; top: -4px; right: -2px; background-color: white; color: var(--primary-green); width: 24px; height: 24px; border-radius: 50%; display: none; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; box-shadow: 0 3px 8px rgba(0,0,0,0.25); }
 
         .badge-wrapper.active .badge-circle { background-color: var(--primary-green); border-color: var(--primary-green); color: white; transform: scale(1.1); }
-        .badge-wrapper.active .badge-label { color: var(--primary-green); } /* Esto cambiará la palabra a color verde al escanear */
+        .badge-wrapper.active .badge-label { color: var(--primary-green); }
         .badge-wrapper.active .badge-check { display: flex; }
 
         /* Controles de la cámara ABAJO */
@@ -187,15 +187,15 @@
     </div>
 
     <script>
+        // ARCHIVOS OFICIALES DE GOOGLE (Sin bloqueos)
         const sonidoEscaneo = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
         const sonidoVictoria = new Audio('https://actions.google.com/sounds/v1/crowds/light_applause.ogg');
 
-        // AQUI ESTÁN TUS ESTACIONES CON LAS PALABRAS QUE SE MOSTRARÁN EN PANTALLA
         const estaciones = [
-            { id: "estacion1", titulo: "1°", nombreAMostrar: "Reducir", codigoFisico: "REDUCIR" },
-            { id: "estacion2", titulo: "2°", nombreAMostrar: "Reutilizar", codigoFisico: "REUTILIZAR" },
-            { id: "estacion3", titulo: "3°", nombreAMostrar: "Reciclar", codigoFisico: "RECICLAR" },
-            { id: "estacion4", titulo: "4°", nombreAMostrar: "Recuperar", codigoFisico: "RECUPERAR" }
+            { id: "estacion1", titulo: "1°", codigoFisico: "REDUCIR" },
+            { id: "estacion2", titulo: "2°", codigoFisico: "REUTILIZAR" },
+            { id: "estacion3", titulo: "3°", codigoFisico: "RECICLAR" },
+            { id: "estacion4", titulo: "4°", codigoFisico: "RECUPERAR" }
         ];
 
         let codigosEscaneados = new Set();
@@ -218,8 +218,7 @@
             let label = document.createElement('div');
             label.className = 'badge-label';
             label.id = `label-${estacion.id}`;
-            // AQUÍ COLOCAMOS EL NOMBRE EN VEZ DE "INCOMPLETO"
-            label.innerText = estacion.nombreAMostrar; 
+            label.innerText = 'INCOMPLETO';
 
             circle.appendChild(check);
             wrapper.appendChild(circle);
@@ -231,6 +230,7 @@
             const btn = document.getElementById('btn-iniciar');
             const feedback = document.getElementById('feedback');
             
+            // TRUCO DE DESBLOQUEO SILENCIOSO PARA QUE EL CELULAR AUTORICE LOS AUDIOS LUEGO
             sonidoEscaneo.volume = 0;
             sonidoEscaneo.play().then(() => { 
                 sonidoEscaneo.pause(); sonidoEscaneo.currentTime = 0; sonidoEscaneo.volume = 1; 
@@ -266,13 +266,14 @@
                 if (!codigosEscaneados.has(estacionEncontrada.id)) {
                     codigosEscaneados.add(estacionEncontrada.id);
                     
-                    // ESTO ENCIENDE EL CÍRCULO VERDE Y PONE LA TILDE
                     document.getElementById(`wrapper-${estacionEncontrada.id}`).classList.add('active');
+                    document.getElementById(`label-${estacionEncontrada.id}`).innerText = 'COMPLETO';
                     
                     feedback.innerText = `¡Estación ${estacionEncontrada.titulo} registrada!`;
                     feedback.style.color = "var(--primary-green)";
 
                     if (codigosEscaneados.size < estaciones.length) {
+                        // REPRODUCE EL BOING PARA ESTACIONES 1, 2 Y 3
                         sonidoEscaneo.currentTime = 0;
                         sonidoEscaneo.play().catch(e => console.log(e));
                         
@@ -300,12 +301,14 @@
         function verificarVictoria() {
             if (codigosEscaneados.size === estaciones.length) {
                 
+                // DISPARA LOS APLAUSOS INMEDIATAMENTE AL LEER EL 4TO CÓDIGO
                 sonidoVictoria.currentTime = 0;
                 sonidoVictoria.play().catch(e => console.log(e));
                 
                 if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 600]);
                 lanzarConfetti();
 
+                // DESPUÉS APAGA LA CÁMARA (Así evitamos que el navegador bloquee el audio)
                 html5QrCode.stop().then(() => {
                     document.getElementById('scanner-section').style.display = 'none';
                     document.getElementById('app-header').style.display = 'none';
